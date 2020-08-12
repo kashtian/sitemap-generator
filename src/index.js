@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
@@ -65,7 +66,8 @@ module.exports = function SitemapGenerator(uri, opts) {
     options.maxEntriesPerFile,
     options.lastMod,
     options.changeFreq,
-    options.priorityMap
+    options.priorityMap,
+    options.sitemapHost
   );
 
   const emitError = (code, url) => {
@@ -97,6 +99,8 @@ module.exports = function SitemapGenerator(uri, opts) {
   crawler.on('fetchcomplete', (queueItem, page) => {
     const { url, depth } = queueItem;
 
+    console.log('url depth--->', url, depth);
+
     if (
       (opts.ignore && opts.ignore(url)) ||
       /(<meta(?=[^>]+noindex).*?>)/.test(page) || // check if robots noindex is present
@@ -109,12 +113,17 @@ module.exports = function SitemapGenerator(uri, opts) {
       if (sitemapPath !== null) {
         // eslint-disable-next-line
         const lastMod = queueItem.stateData.headers['last-modified'];
-        sitemap.addURL(url, depth, lastMod && format(lastMod, 'YYYY-MM-DD'));
+        sitemap.addURL(
+          queueItem,
+          depth,
+          lastMod && format(lastMod, 'YYYY-MM-DD')
+        );
       }
     }
   });
 
   crawler.on('complete', () => {
+    console.log('crawler finished', sitemapPath);
     sitemap.finish();
 
     const sitemaps = sitemap.getPaths();

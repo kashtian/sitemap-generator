@@ -5,7 +5,8 @@ module.exports = function SitemapRotator(
   maxEntries,
   lastModEnabled,
   changeFreq,
-  priorityMap
+  priorityMap,
+  sitemapHost
 ) {
   const sitemaps = [];
   let count = 0;
@@ -19,12 +20,17 @@ module.exports = function SitemapRotator(
     }, []);
 
   // adds url to stream
-  const addURL = (url, depth, lastMod = getCurrentDateTime()) => {
+  const addURL = (queueItem, depth, lastMod = getCurrentDateTime()) => {
     const currentDateTime = lastModEnabled ? lastMod : null;
+    let { url } = queueItem;
 
     // exclude existing sitemap.xml
     if (/sitemap\.xml$/.test(url)) {
       return;
+    }
+
+    if (sitemapHost) {
+      url = sitemapHost + (queueItem.path === '/' ? '' : queueItem.path);
     }
 
     // create stream if none exists
